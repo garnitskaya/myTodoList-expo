@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import * as Font from 'expo-font';
 import AppLoading from 'expo-app-loading';
 import uuid from 'react-native-uuid';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import AppHeaderInfo from './components/AppHeaderInfo';
 import ItemAddForm from './components/ItemAddForm';
@@ -18,16 +19,33 @@ const fonts = () => Font.loadAsync({
 });
 
 export default function App() {
-    const dataItems = [
-        { label: 'Купить машину', done: true, important: true, id: 1 },
-        { label: 'Поехать на море ', done: false, important: true, id: 2 },
-        { label: 'Пополнить интернет Пополнить интернет Пополнить интернет ', done: true, important: true, id: 3 },
-    ]
-
-    const [data, setData] = useState(dataItems);
+    const [todos, setTodos] = useState([]);
     const [font, setFont] = useState(false);
     const [term, setTerm] = useState('');
     const [filter, setFilter] = useState('all');
+
+    useEffect(() => {
+        loadTodos()
+    }, []);
+
+    const saveTodos = async (value) => {
+        try {
+            const jsonValue = JSON.stringify(value);
+            await AsyncStorage.setItem('data', jsonValue)
+        } catch (e) {
+            alert('Application Error. Cannot load data.')
+        }
+    }
+
+    const loadTodos = async () => {
+        try {
+            const getTodos = await AsyncStorage.getItem('data')
+            const parsedTodos = JSON.parse(getTodos)
+            setTodos(parsedTodos || []);
+        } catch (e) {
+            alert('Application Error. Cannot load data.')
+        }
+    };
 
     const addItem = (label) => {
         const newItem = {
@@ -37,20 +55,28 @@ export default function App() {
             id: uuid.v4()
         };
 
-        setData((data) => [...data, newItem])
+        setTodos(todos => {
+            const newTodos = [...todos, newItem];
+            saveTodos(newTodos);
+            return newTodos;
+        });
     }
 
     const deleteItem = (id) => {
-        setData(data.filter(item => item.id !== id));
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        setTodos(todos => {
+            const newTodos = todos.filter(item => item.id !== id)
+            saveTodos(newTodos);
+            return newTodos;
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Medium);
     }
 
     const onToggleImportant = (id) => {
-        setData(data.map(item => item.id === id ? { ...item, important: !item.important } : item));
+        setTodos(todos.map(item => item.id === id ? { ...item, important: !item.important } : item));
     };
 
     const onToggleDone = (id) => {
-        setData(data.map(item => item.id === id ? { ...item, done: !item.done } : item));
+        setTodos(todos.map(item => item.id === id ? { ...item, done: !item.done } : item));
     };
 
     const searchItem = (items, term) => {
@@ -81,13 +107,12 @@ export default function App() {
         setFilter(filter);
     }
 
-    const visible = filterItem((searchItem(data, term)), filter);
-
+    const visible = filterItem((searchItem(todos, term)), filter);
 
     if (font) {
         return (
             <View style={styles.container}>
-                <AppHeaderInfo data={data} />
+                <AppHeaderInfo todos={todos} />
                 <SearchPanel onUpdateSearch={onUpdateSearch} />
                 <ItemsFilter
                     filter={filter}

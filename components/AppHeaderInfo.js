@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function AppHeaderInfo({ data }) {
+export default function AppHeaderInfo({ todos }) {
 
-    const all = data.length;
-    const done = data.filter(item => item.done).length;
+    const all = todos.length;
+    const done = todos.filter(item => item.done).length;
     const line = all ? ((done / all) * 100).toFixed(0) : 0;
 
     return (

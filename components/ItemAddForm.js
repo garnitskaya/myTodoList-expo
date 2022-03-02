@@ -12,7 +12,7 @@ export default function ItemAddForm({ onAdd }) {
 
     const onSubmitItem = () => {
         label && onAdd(label);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Medium);
         setLabel('');
     }
 

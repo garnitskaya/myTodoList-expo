@@ -1,3 +1,3 @@
 # myTodoList-expo
 
-  ![video](assets/video.gif
+  ![video](assets/video.gif)
